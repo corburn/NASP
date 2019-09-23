@@ -1,6 +1,9 @@
 from snakemake.utils import min_version, validate
 
-min_version("3.2")
+#min_version("3.2")
+# https://snakemake.readthedocs.io/en/stable/project_info/history.html#id104
+# Ability to define isolated conda software environments (YAML) per rule. Environments will be deployed by Snakemake upon workflow execution.
+min_version("3.9")
 
 configfile: "config.yaml"
 validate(config, schema="schemas/config.schema.yaml")
