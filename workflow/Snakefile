@@ -1,5 +1,8 @@
 from snakemake.utils import min_version, validate
 
+# 5.6.0
+# Add --default-resources flag, that allows to define default resources for jobs (e.g. mem_mb, disk_mb), see docs.
+# https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
 min_version("5.6.0")
 
 configfile: "config.yaml"
@@ -9,6 +12,8 @@ validate(config, schema="schemas/config.schema.yaml")
 #validate(cells, schema="schemas/cells.schema.yaml")
 
 # https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#combining-conda-package-management-with-containers
+# this container defines the underlying OS for each job when using the workflow
+# with snakemake --use-conda --use-singularity
 singularity: "docker://continuumio/miniconda3:latest"
 
 rule all:
@@ -19,9 +24,33 @@ rule all:
   benchmark: []
   message: ''
   threads: 1
-  #resources: []
+  resources:
+    mem_mb=lambda wildcards, attempt: attempt * 100
   #run: ''
   shell: 'echo hello world'
+
+ids, = glob_wildcards("thedir/{id}.fastq.gz")
+
+#rule bestsnp.tsv:
+#  input:
+#    reference=config['reference'],
+#    vcf
+
+# https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#directories-as-outputs
+#rule vcf:
+#    input: expand("vcf/{id}.vcf", id=IDS)
+#    output:
+#        directory("path/to/outputdir")
+#    shell:
+#        "somecommand {input} {output}"
+
+#rule vcf:
+#  input: "bam/{sample}.bam"
+#  output: "vcf/{sample}.vcf"
+#  conda: "envs/samtools_bwa_gatk.yaml"
+#  shell: """
+#  gatk
+#  """
 
 # TODO: what if reference or query is blank/invalid?
 rule frankenfasta:
@@ -68,3 +97,21 @@ rule samtools_index:
 
 # onstart handler, that allows to add code that shall be only executed before the actual workflow execution (not on dryrun).
 # Parameters defined in the cluster config file are now accessible in the job properties under the key “cluster”.
+
+
+# Error: no Snakefile found, tried Snakefile, snakefile, workflow/Snakefile, workflow/snakefile.
+
+# this container defines the underlying OS for each job when using the workflow
+# with snakemake --use-conda --use-singularity
+singularity: "docker://continuumio/miniconda3"
+
+##### setup report #####
+
+report: "report/workflow.rst"
+
+##### load rules #####
+
+#include: "rules/a.smk"
+#include: "rules/b.smk"
+#include: "rules/c.smk"
+#include: "rules/d.smk"
