@@ -101,10 +101,6 @@ rule samtools_index:
 
 # Error: no Snakefile found, tried Snakefile, snakefile, workflow/Snakefile, workflow/snakefile.
 
-# this container defines the underlying OS for each job when using the workflow
-# with snakemake --use-conda --use-singularity
-singularity: "docker://continuumio/miniconda3"
-
 ##### setup report #####
 
 report: "report/workflow.rst"

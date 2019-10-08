@@ -1,0 +1,73 @@
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+        # CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+        # To initialize your shell, run
+        #
+        #     $ conda init <SHELL_NAME>
+        #
+        # Currently supported shells are:
+        #   - bash
+        #   - fish
+        #   - tcsh
+        #   - xonsh
+        #   - zsh
+        #   - powershell
+        #
+        # See 'conda init --help' for more information and options.
+        #
+        # IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+        #
+        # ---------------------------------------------------------------------------------------------
+        #
+        # The default ~/.bashrc starts with an early return for non-interactive shells:
+        #     case $- in
+        #         *i*) ;;
+        #           *) return;;
+        #     esac
+        #
+        # https://help.github.com/en/articles/workflow-syntax-for-github-actions#using-a-specific-shell
+        # bash --noprofile --norc -eo pipefail {0}
+        #
+        # --------------------------------------------------------------------------------------------
+        #
+        # # >>> conda initialize >>>
+        # # !! Contents within this block are managed by 'conda init' !!
+        # __conda_setup="$('/home/runner/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+        # if [ $? -eq 0 ]; then
+        #     eval "$__conda_setup"
+        # else
+        #     if [ -f "/home/runner/miniconda3/etc/profile.d/conda.sh" ]; then
+        #         . "/home/runner/miniconda3/etc/profile.d/conda.sh"
+        #     else
+        #         export PATH="/home/runner/miniconda3/bin:$PATH"
+        #     fi
+        # fi
+        # unset __conda_setup
+        # # <<< conda initialize <<<
+        #
+        # --------------------------------------------------------------------------------------------
+      - name: install conda
+        run: |
+          curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+          bash Miniconda3-latest-Linux-x86_64.sh -b -u
+          :>| ~/.bashrc # truncate as a simple way to remove the test for non-interactive shells.
+          $HOME/miniconda3/bin/conda init
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
+          conda update -q -y -n base -c defaults conda
+      - name: install Snakemake
+        run: |
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
+          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
+      - run: |
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
+          conda activate snakemake
+          snakemake -s ./workflow/Snakefile --directory ./workflow/
