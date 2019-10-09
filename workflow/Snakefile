@@ -71,6 +71,7 @@ rule all:
 
 rule config:
   run:
+    print( config )
     
 
 # TODO: what if reference or query is blank/invalid?
