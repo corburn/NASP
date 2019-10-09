@@ -87,10 +87,10 @@ jobs:
           bash Miniconda3-latest-MacOSX-x86_64.sh -b -u
           $HOME/miniconda3/bin/conda init
           $HOME/miniconda3/bin/conda update -q -y -n base -c defaults conda
-#      - name: install Snakemake
-#        run: |
-#          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
-#      - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
-#        run: |
-#          conda activate snakemake
-#          snakemake -s ./workflow/Snakefile --directory ./workflow/
+      - name: install Snakemake
+        run: |
+          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
+      - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
+        run: |
+          conda activate snakemake
+          snakemake -s ./workflow/Snakefile --directory ./workflow/
