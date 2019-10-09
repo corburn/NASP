@@ -1,13 +1,18 @@
 {
-  "$id": "https://example.com/person.schema.json",
+  "$id": "https://TGenNorth.github.io/nasp.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Person",
+  "title": "Northern Arizona SNP Pipeline",
   "type": "object",
   "properties": {
     "reference": {
       "type": "string",
       "description": "TODO",
-      "default": "reference.fasta"
+      "default": "file://reference.fasta"
+    },
+    "assemblies_dir": {
+      "type": "string",
+      "description": "TODO",
+      "default": "assemblies"
     },
     "age": {
       "description": "Age in years which must be equal to or greater than zero.",

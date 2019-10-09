@@ -5,7 +5,15 @@ from snakemake.utils import min_version, validate
 # https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#resources
 min_version("5.6.0")
 
-configfile: "config.yaml"
+# https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#standard-configuration
+#
+# Schema validation of the config serves to:
+# * validate user-input configuration
+# * define default values
+#
+# The `configfile: [FILE]` directive is not used because it requires the file exists in the working directory.
+# `snakemake --configfile [FILE]` allows the user to override values in the config, but not the path to the config.
+#configfile: "config.yaml"
 validate(config, schema="schemas/config.schema.yaml")
 
 #cells = pd.read_csv(config["cells"], sep="\t").set_index("id", drop=False)
@@ -15,6 +23,11 @@ validate(config, schema="schemas/config.schema.yaml")
 # this container defines the underlying OS for each job when using the workflow
 # with snakemake --use-conda --use-singularity
 singularity: "docker://continuumio/miniconda3:latest"
+
+# https://snakemake.readthedocs.io/en/stable/tutorial/additional_features.html#constraining-wildcards
+# "sorted_reads/{sample,[A-Za-z0-9]+}.bam"
+assemblies, = glob_wildcards("config[assemblies_dir]/{id}.fasta")
+ids, = glob_wildcards("thedir/{id}.fastq.gz")
 
 rule all:
   input: []
@@ -27,9 +40,13 @@ rule all:
   resources:
     mem_mb=lambda wildcards, attempt: attempt * 100
   #run: ''
-  shell: 'echo hello world'
-
-ids, = glob_wildcards("thedir/{id}.fastq.gz")
+  shell:
+    """
+    echo config:{config[reference]}
+    echo reference:{config[reference]}
+    echo assemblies_dir:{config[assemblies_dir]}
+    echo assemblies:{assemblies}
+    """
 
 #rule bestsnp.tsv:
 #  input:
@@ -52,12 +69,16 @@ ids, = glob_wildcards("thedir/{id}.fastq.gz")
 #  gatk
 #  """
 
+rule config:
+  run:
+    
+
 # TODO: what if reference or query is blank/invalid?
 rule frankenfasta:
   input:
     reference=config['reference'],
-    query='{sample_name}.fasta'
-  output: '{sample_name}.frankenfasta'
+    query='{config[assemblies_dir]}/{sample_name}.fasta'
+  output: 'frankenfasta/{sample_name}.frankenfasta'
   params:
     sample_name='{sample_name}'
   log: []

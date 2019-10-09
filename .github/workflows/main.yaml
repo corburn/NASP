@@ -1,7 +1,7 @@
 name: CI
 on: [push]
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -67,7 +67,30 @@ jobs:
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
-      - run: |
+      - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
+        run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda activate snakemake
           snakemake -s ./workflow/Snakefile --directory ./workflow/
+
+  build-osx:
+    runs-on: macOS-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+      - name: install conda
+        run: |
+          curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+          bash Miniconda3-latest-MacOSX-x86_64.sh -b -u
+          $HOME/miniconda3/bin/conda init
+          $HOME/miniconda3/bin/conda update -q -y -n base -c defaults conda
+#      - name: install Snakemake
+#        run: |
+#          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
+#      - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
+#        run: |
+#          conda activate snakemake
+#          snakemake -s ./workflow/Snakefile --directory ./workflow/
