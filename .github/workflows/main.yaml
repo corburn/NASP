@@ -67,23 +67,24 @@ jobs:
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda install -n base -q -y conda-build
-          conda build .
-          conda install -n base -q -y -c conda-forge -c bioconda bbmap
           conda activate base
+          conda build .
+          conda create -n bbmap -q -y -c conda-forge -c bioconda bbmap
+          conda activate bbmap
           randomgenome.sh len=1000 out=reference.fasta
-          mkdir assemblies
+          mkdir -pv assemblies
           cp reference.fasta assemblies/foo.fasta
           cp reference.fasta assemblies/bar.fasta
       - name: install Snakemake
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
-          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
+          conda create -n snakemake -q -y -c conda-forge -c bioconda snakemake
       - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda activate snakemake
           snakemake -s workflow/Snakefile --list-target-rules \
-          | xargs snakemake -s ./workflow/Snakefile --directory ./workflow/
+          | xargs snakemake -s ./workflow/Snakefile
 
   build-osx:
     runs-on: macOS-latest
