@@ -27,7 +27,7 @@ singularity: "docker://continuumio/miniconda3:latest"
 # https://snakemake.readthedocs.io/en/stable/tutorial/additional_features.html#constraining-wildcards
 # "sorted_reads/{sample,[A-Za-z0-9]+}.bam"
 #assemblies, = glob_wildcards(expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir']))
-assemblies, = expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir'])
+#assemblies = expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir'])
 ids, = glob_wildcards("thedir/{id}.fastq.gz")
 
 rule all:
@@ -43,8 +43,10 @@ rule all:
   run:
     print("FOOBAR")
     print(config)
-    print(assemblies)
-    print(glob_wildcards(assemblies))
+    #print(assemblies)
+    #print(type(assemblies))
+    #assemblies2, = glob_wildcards(assemblies)
+    #print(assemblies2)
   #shell:
   #  """
   #  echo config:{config[reference]}
@@ -77,11 +79,17 @@ rule all:
 rule config:
   run:
     print( config )
-   
+    print(rules.frankenfasta.output)
+
+assemblies, = glob_wildcards(expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir'])[0])
+
 rule matrix:
+  params:
+    minimum_coverage=config['minimum_coverage'],
+    minimum_proportion=config['minimum_proportion']
   input:
     reference=config['reference'],
-    frankenfasta=expand("frankenfasta/{sample}.frankenfasta", sample=assemblies)
+    frankenfasta=expand('frankenfasta/{id}.frankenfasta', id=assemblies)
   output:
     general_stats="general_stats.tsv",
     sample_stats="sample_stats.tsv",
@@ -92,8 +100,8 @@ rule matrix:
   shell: """
     nasp matrix \
       --reference-fasta {input.reference} \
-      --minimum-coverage 10 \
-      --minimum-proportion 0.9 \
+      --minimum-coverage {params.minimum_coverage} \
+      --minimum-proportion {params.minimum_proportion} \
       frankenfasta/*.frankenfasta
     """
 
@@ -111,7 +119,6 @@ rule frankenfasta:
   #threads: 1
   #resources: []
   conda: "envs/mummer.yaml"
-  #run: ''
   # nucmer [options] <Reference> <Query>
   # delta-filter [options] <deltafile>
   #
@@ -123,7 +130,6 @@ rule frankenfasta:
     delta-filter -q -r -o 100 \
       <(nucmer --threads {threads} --delta /dev/stdout {input.reference} {input.query})
   ) > {output}
-  test -s {output}
   '''
 
 

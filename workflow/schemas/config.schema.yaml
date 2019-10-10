@@ -14,10 +14,24 @@
       "description": "TODO",
       "default": "assemblies"
     },
-    "age": {
-      "description": "Age in years which must be equal to or greater than zero.",
+    "minimum_coverage": {
+      "description": "TODO",
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "default": 0
+    },
+    "minimum_coverage": {
+      "description": "TODO",
+      "type": "integer",
+      "minimum": 0,
+      "default": 10
+    },
+    "minimum_proportion": {
+      "description": "TODO",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.9
     }
   }
 }
