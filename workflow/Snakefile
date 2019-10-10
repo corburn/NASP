@@ -26,7 +26,8 @@ singularity: "docker://continuumio/miniconda3:latest"
 
 # https://snakemake.readthedocs.io/en/stable/tutorial/additional_features.html#constraining-wildcards
 # "sorted_reads/{sample,[A-Za-z0-9]+}.bam"
-assemblies, = glob_wildcards("config[assemblies_dir]/{id}.fasta")
+#assemblies, = glob_wildcards(expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir']))
+assemblies, = expand("{assemblies_dir}/{{id}}.fasta", assemblies_dir=config['assemblies_dir'])
 ids, = glob_wildcards("thedir/{id}.fastq.gz")
 
 rule all:
@@ -39,14 +40,18 @@ rule all:
   threads: 1
   resources:
     mem_mb=lambda wildcards, attempt: attempt * 100
-  #run: ''
-  shell:
-    """
-    echo config:{config[reference]}
-    echo reference:{config[reference]}
-    echo assemblies_dir:{config[assemblies_dir]}
-    echo assemblies:{assemblies}
-    """
+  run:
+    print("FOOBAR")
+    print(config)
+    print(assemblies)
+    print(glob_wildcards(assemblies))
+  #shell:
+  #  """
+  #  echo config:{config[reference]}
+  #  echo reference:{config[reference]}
+  #  echo assemblies_dir:{config[assemblies_dir]}
+  #  echo assemblies:{assemblies}
+  #  """
 
 #rule bestsnp.tsv:
 #  input:
@@ -72,13 +77,31 @@ rule all:
 rule config:
   run:
     print( config )
-    
+   
+rule matrix:
+  input:
+    reference=config['reference'],
+    frankenfasta=expand("frankenfasta/{sample}.frankenfasta", sample=assemblies)
+  output:
+    general_stats="general_stats.tsv",
+    sample_stats="sample_stats.tsv",
+    bestsnp="bestsnp.tsv",
+    master="master.tsv",
+    missingdata="missingdata.tsv"
+  conda: "envs/mummer.yaml"
+  shell: """
+    nasp matrix \
+      --reference-fasta {input.reference} \
+      --minimum-coverage 10 \
+      --minimum-proportion 0.9 \
+      frankenfasta/*.frankenfasta
+    """
 
 # TODO: what if reference or query is blank/invalid?
 rule frankenfasta:
   input:
     reference=config['reference'],
-    query='{config[assemblies_dir]}/{sample_name}.fasta'
+    query=expand('{assemblies_dir}/{{sample_name}}.fasta', assemblies_dir=config['assemblies_dir'])
   output: 'frankenfasta/{sample_name}.frankenfasta'
   params:
     sample_name='{sample_name}'
@@ -91,11 +114,16 @@ rule frankenfasta:
   #run: ''
   # nucmer [options] <Reference> <Query>
   # delta-filter [options] <deltafile>
+  #
+  # TODO: remove test -s {output}
+  # The nasp<=1.1.2 python dispatcher does not forward the nasptool exit code.
+  # As a stop-gap, fail if the output is empty.
   shell: '''
   nasp frankenfasta <(
     delta-filter -q -r -o 100 \
       <(nucmer --threads {threads} --delta /dev/stdout {input.reference} {input.query})
   ) > {output}
+  test -s {output}
   '''
 
 

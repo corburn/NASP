@@ -63,6 +63,17 @@ jobs:
           $HOME/miniconda3/bin/conda init
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda update -q -y -n base -c defaults conda
+      - name: "TODO: remove conda build"
+        run: |
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
+          conda install -n base -q -y conda-build
+          conda build .
+          conda install -n base -q -y -c conda-forge -c bioconda bbmap
+          conda activate base
+          randomgenome.sh len=1000 out=reference.fasta
+          mkdir assemblies
+          cp reference.fasta assemblies/foo.fasta
+          cp reference.fasta assemblies/bar.fasta
       - name: install Snakemake
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
@@ -71,7 +82,8 @@ jobs:
         run: |
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda activate snakemake
-          snakemake -s ./workflow/Snakefile --directory ./workflow/
+          snakemake -s workflow/Snakefile --list-target-rules \
+          | xargs snakemake -s ./workflow/Snakefile --directory ./workflow/
 
   build-osx:
     runs-on: macOS-latest
@@ -89,8 +101,10 @@ jobs:
           $HOME/miniconda3/bin/conda update -q -y -n base -c defaults conda
       - name: install Snakemake
         run: |
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
       - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
         run: |
+          . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda activate snakemake
           snakemake -s ./workflow/Snakefile --directory ./workflow/

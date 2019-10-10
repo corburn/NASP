@@ -7,7 +7,7 @@
     "reference": {
       "type": "string",
       "description": "TODO",
-      "default": "file://reference.fasta"
+      "default": "reference.fasta"
     },
     "assemblies_dir": {
       "type": "string",
