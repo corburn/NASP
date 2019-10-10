@@ -84,7 +84,7 @@ jobs:
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda activate snakemake
           snakemake -s workflow/Snakefile --list-target-rules \
-          | xargs snakemake -s ./workflow/Snakefile
+          | xargs snakemake --use-conda -j -s ./workflow/Snakefile
 
   build-osx:
     runs-on: macOS-latest
