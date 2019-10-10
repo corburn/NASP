@@ -6,8 +6,7 @@ jobs:
     timeout-minutes: 5
     strategy:
       matrix:
-          #os: [ubuntu-latest, macOS-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v1
         with:
@@ -61,10 +60,10 @@ jobs:
         # --------------------------------------------------------------------------------------------
       - name: install conda
         run: |
-          curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-          bash Miniconda3-latest-Linux-x86_64.sh -b -u
-          :>| ~/.bashrc # truncate as a simple way to remove the test for non-interactive shells.
-          $HOME/miniconda3/bin/conda init
+          PLATFORM=Linux
+          [[ "$RUNNER_OS" == "macOS" ]] && PLATFORM="MacOSX"
+          curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-${PLATFORM}-x86_64.sh
+          bash Miniconda3-latest-${PLATFORM}-x86_64.sh -b -u
           . "$HOME/miniconda3/etc/profile.d/conda.sh"
           conda update -q -y -n base -c defaults conda
       - name: "TODO: remove conda build"
@@ -89,40 +88,3 @@ jobs:
           conda activate snakemake
           snakemake -s workflow/Snakefile --list-target-rules \
           | xargs snakemake --use-conda -j -s ./workflow/Snakefile
-
-  build-osx:
-    runs-on: macOS-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 1
-      - name: install conda
-        run: |
-          env
-          curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-          bash Miniconda3-latest-MacOSX-x86_64.sh -b -u
-          $HOME/miniconda3/bin/conda init
-          $HOME/miniconda3/bin/conda update -q -y -n base -c defaults conda
-      - name: "TODO: remove conda build"
-        run: |
-          . "$HOME/miniconda3/etc/profile.d/conda.sh"
-          conda install -n base -q -y conda-build
-          conda activate base
-          conda build .
-          conda create -n bbmap -q -y -c conda-forge -c bioconda bbmap
-          conda activate bbmap
-          randomgenome.sh len=1000 out=reference.fasta
-          mkdir -pv assemblies
-          cp reference.fasta assemblies/foo.fasta
-          cp reference.fasta assemblies/bar.fasta
-      - name: install Snakemake
-        run: |
-          . "$HOME/miniconda3/etc/profile.d/conda.sh"
-          conda create -q -y -n snakemake -c conda-forge -c bioconda snakemake
-      - name: snakemake -s ./workflow/Snakefile --directory ./workflow/
-        run: |
-          . "$HOME/miniconda3/etc/profile.d/conda.sh"
-          conda activate snakemake
-          snakemake -s ./workflow/Snakefile --directory ./workflow/
